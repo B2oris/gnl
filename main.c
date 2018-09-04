@@ -1,31 +1,17 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   main.c                                             :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: beborch <marvin@42.fr>                     +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2017/12/12 23:18:25 by beborch           #+#    #+#             */
-/*   Updated: 2017/12/13 01:29:43 by beborch          ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
+#include "get_next_line.h"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include "libft.h"
-
-int		main(int argc, char *argv[])
+int     main()
 {
-	int file;
-	int ret;
-	char buff[200];
-
-	file = open (argv[1], O_RDONLY);
-	ret = read(file, buff, 200);
-	ft_putstr(buff);
+	char     *str;
+	ft_putendl("Prompt");
+	str = ft_strnew(0);
+	while(get_next_line(1, &str) != 0)
+	{
+		if (ft_strcmp(str, "exit") == 0)
+			exit(0);
+		ft_putstr("> ");
+		ft_putendl(str);
+	}
 	return (0);
 }
+

@@ -3,97 +3,86 @@
 /*                                                        :::      ::::::::   */
 /*   get_next_line.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: beborch <marvin@42.fr>                     +#+  +:+       +#+        */
+/*   By: beborch <beborch@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2017/12/04 18:27:04 by beborch           #+#    #+#             */
-/*   Updated: 2017/12/13 00:40:39 by beborch          ###   ########.fr       */
+/*   Created: 2018/08/13 17:58:51 by beborch           #+#    #+#             */
+/*   Updated: 2018/09/04 04:12:40 by beborch          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-#include "get_next_line.h"
-
-static int	last_line(char *buff)
+static char		*get_line(t_gnl *gnl, char *buff)
 {
-	int		i;
+	char *tmp;
+
+	gnl->i = 0;
+	while ((buff[gnl->i] != '\n') && (buff[gnl->i] != '\0'))
+		gnl->i++;
+	gnl->str = (char*)malloc(sizeof(*gnl->str) * (gnl->i + 1));
+	ft_strncpy(gnl->str, buff, gnl->i);
+	gnl->str[gnl->i] = '\0';
+	gnl->j = gnl->i;
+	if (buff[gnl->i] == '\n')
+		gnl->i++;
+	tmp = ft_strsub(buff, gnl->i, (ft_strlen(buff) - gnl->j));
+	free (buff);
+	return (tmp);
+}
+
+static int		get_ret(char *str)
+{
+	int i;
 
 	i = 0;
-	while (buff[i] != '\n' && buff[i])
+	while (str[i] != '\0')
 		i++;
-	if (buff[i] == '\n')
-	{
-		buff[i] = '\0';
-		return (i);
-	}
-	else
-		return (-1);
-}
-
-static char	*join(char *buff, char *tab)
-{
-	size_t	i;
-	size_t	j;
-	char	*str;
-
-	i = 0;
-	j = 0;
-	if (buff)
-		i = ft_strlen(buff);
-	if (tab)
-		j = ft_strlen(tab);
-	str = (char *)malloc(sizeof(*str) * (i + j + 1));
-	ft_memcpy(str, buff, i);
-	ft_memcpy(str + i, tab, j);
-	str[i + j] = '\0';
-	free(buff);
-	ft_bzero(tab, BUFF_SIZE + 1);
-	return (str);
-}
-
-static int	verif(char **buff, char **tab, char **line)
-{
-	char	*str;
-	int		last;
-
-	*buff = join(*buff, *tab);
-	last = last_line(*buff);
-	if (last > -1)
-	{
-		*line = ft_strdup(*buff);
-		str = *buff;
-		*buff = ft_strdup(*buff + last + 1);
-		free(str);
+	if (i > 0)
 		return (1);
-	}
 	return (0);
 }
 
-int			get_next_line(int const fd, char **line)
+static char	*ft_strjoin_del(char const *s1, char const *s2, int j)
 {
-	static char *buff[BUFF_SIZE];
-	char		*tmp;
-	int			ret;
-	int			result;
+	int		i;
+	char	*str;
 
-	tmp = ft_strnew(BUFF_SIZE);
-	if (!line || BUFF_SIZE <= 0 || fd < 0 || (ret = read(fd, tmp, 0)) < 0)
+	if (!(s1) || !(s2))
+		return (NULL);
+	i = ft_strlen(s1) + ft_strlen(s2);
+	if (!(str = (char *)ft_memalloc(sizeof(*str) * (i + 1))))
+		return (NULL);
+	str = ft_strcat(str, (char *)s1);
+	str = ft_strcat(str, (char *)s2);
+	str[i] = '\0';
+	if (j == 1 || j == 3)
+		free((void*)s1);
+	if (j == 2 || j == 3)
+		free((void*)s2);
+	return (str);
+}
+
+int				get_next_line(const int fd, char **line)
+{
+	static char	*tmp[5000];
+	t_gnl		gnl;
+
+	if (fd < 0 || !line || BUFF_SIZE < 1)
 		return (-1);
-	while ((ret = read(fd, tmp, BUFF_SIZE)) > 0)
+	if (!tmp[fd])
+		tmp[fd] = ft_strnew(0);
+	while ((gnl.ret = read(fd, gnl.buff, BUFF_SIZE)) > 0)
 	{
-		result = verif(&buff[fd], &tmp, line);
-		free(tmp);
-		if (result == 1)
-			return (1);
-		tmp = ft_strnew(BUFF_SIZE);
+		if (gnl.ret != 0)
+			gnl.buff[gnl.ret] = '\0';
+		tmp[fd] = ft_strjoin_del(tmp[fd], gnl.buff, 1);
 	}
-	if ((result = verif(&buff[fd], &tmp, line)))
-		return (1);
-	else if (ft_strlen(buff[fd]) > 0)
-	{
-		*line = ft_strdup(buff[fd]);
-		ft_strdel(&buff[fd]);
-		return (1);
-	}
-	return (result);
+	if (gnl.ret == -1)
+		return (-1);
+	gnl.ret = get_ret(tmp[fd]);
+	if (tmp[fd][0] == '\0')
+		return (0);
+	tmp[fd] = get_line(&gnl, tmp[fd]);
+	*line = gnl.str;
+	return (gnl.ret);
 }
